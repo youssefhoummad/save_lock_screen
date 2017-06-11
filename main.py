@@ -96,12 +96,33 @@ def get_image_size(fname):
 
 class Program:
     def __init__(self):
-        pass
-    
+        self.root = tk.Tk()
+        self.dst = os.path.expanduser("~/Desktop")
+
+        ttk.Label(self.root, text="Select Folder").grid(row=0, column=0, columnspan=4)
+        ttk.Label(self.root, text="Choose Folder").grid(row=1, column=0)
+
+        self.entry = ttk.Entry(self.root, width=50, text=self.dst)
+        self.browsebutton = ttk.Button(self.root, text="Browse", command=self.browsefunc)
+        self.submitButton = ttk.Button(self.root, text="save", command=self.savefunc)
+
+        self.entry.grid(row=1,column=1, padx=2, pady=2, sticky='we', columnspan=2)
+        self.browsebutton.grid(row=1, column=3, padx=2, pady=2)
+        self.submitButton.grid(row=2, column=2, padx=2, pady=2, columnspan=2)
+        
+        self.entry.insert(0, self.dst)
+        self.root.mainloop()
+
+    def browsefunc(self):
+        self.dst = askdirectory(initialdir="%desktop%", title='Select your pictures folder')
+        self.entry.delete(0, tk.END)
+        self.entry.insert(0, self.dst)
+        
+    def savefunc(self):
+        src = get_sourc_path()
+        copy_images(src, self.dst)
+
 
 if __name__ == '__main__':
-    root = tk.Tk()
-    src = get_sourc_path()
-    dst = askdirectory(initialdir="%desktop%", title='Select your pictures folder')
-    copy_images(src, dst)
-    exit()
+    Program()
+
