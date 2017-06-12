@@ -4,6 +4,8 @@ import os
 import struct
 import imghdr
 
+import hashlib
+
 import tkinter as tk
 from tkinter import ttk
 from tkinter.filedialog import askdirectory
@@ -20,16 +22,26 @@ def copy_images(src, dst, mobile=False):
     src_files = os.listdir(src)
     count = get_counter(dst)
 
+    dst_files = os.listdir(dst)
+    hashes = []
+    for file in dst_files:
+        hashes.append(hash_file(file))
+
     for file_name in src_files:
         full_file_name = os.path.join(src, file_name)
         width, height = get_image_size(full_file_name)
-        if not mobile and (height / width > 1):
+        # ignore wallpaper mobile
+        if not mobile and (height / width > 1):   
             continue
         
         if width > 700 and height > 700:
+            # ignore wallpaper ready exist
+            if hash_file(full_file_name) in hashes:
+                continue
             shutil.copy(full_file_name, dst)
             os.rename(file_name, '{}.jpg'.format(count))
             count +=1
+
 
 
 def get_counter(dst):
@@ -51,6 +63,28 @@ def get_int(filename):
         return int(name)
     except:
         return 0
+
+
+# https://www.programiz.com/python-programming/examples/hash-file
+def hash_file(filename):
+   """"This function returns the SHA-1 hash
+   of the file passed into it"""
+
+   # make a hash object
+   h = hashlib.sha1()
+
+   # open file for reading in binary mode
+   with open(filename,'rb') as file:
+
+       # loop till the end of the file
+       chunk = 0
+       while chunk != b'':
+           # read only 1024 bytes at a time
+           chunk = file.read(1024)
+           h.update(chunk)
+
+   # return the hex representation of digest
+   return h.hexdigest()
     
             
 
@@ -97,20 +131,29 @@ def get_image_size(fname):
 class Program:
     def __init__(self):
         self.root = tk.Tk()
+        self.root.configure(background='white')
+        self.root.title('spotlight saver')
+        self.root.geometry('420x200')
+
+
         self.dst = os.path.expanduser("~/Desktop")
+        self.mainFrame = tk.Frame(self.root, bg='white')
 
-        ttk.Label(self.root, text="Select Folder").grid(row=0, column=0, columnspan=4)
-        ttk.Label(self.root, text="Choose Folder").grid(row=1, column=0)
+        tk.Label(self.root, text="SAVE SPOTLIGHT", bg='white', fg='#9581BD', font=('Consolas',20)).grid(row=0, column=0, padx=10, pady=10)
 
-        self.entry = ttk.Entry(self.root, width=50, text=self.dst)
-        self.browsebutton = ttk.Button(self.root, text="Browse", command=self.browsefunc)
-        self.submitButton = ttk.Button(self.root, text="save", command=self.savefunc)
+        self.entry = ttk.Entry(self.mainFrame, width=50, text=self.dst)
+        self.browsebutton = ttk.Button(self.mainFrame, text="Browse", command=self.browsefunc)
+        self.submitButton = ttk.Button(self.mainFrame, text="start", command=self.savefunc)
 
-        self.entry.grid(row=1,column=1, padx=2, pady=2, sticky='we', columnspan=2)
-        self.browsebutton.grid(row=1, column=3, padx=2, pady=2)
-        self.submitButton.grid(row=2, column=2, padx=2, pady=2, columnspan=2)
+
+        self.entry.grid(row=0,column=0, padx=5, pady=5, sticky='we', columnspan=3)
+        self.browsebutton.grid(row=0, column=3, padx=5, pady=5)
+        self.submitButton.grid(row=1, column=0, padx=5, pady=20, columnspan=4)
+        self.mainFrame.grid(row=1, column=0, padx=10, pady=10)
         
         self.entry.insert(0, self.dst)
+        
+
         self.root.mainloop()
 
     def browsefunc(self):
@@ -118,11 +161,15 @@ class Program:
         self.entry.delete(0, tk.END)
         self.entry.insert(0, self.dst)
         
+
     def savefunc(self):
         src = get_sourc_path()
         copy_images(src, self.dst)
 
+        self.submitButton.grid_remove()
+        tk.Label(self.mainFrame, text="DONE", bg='white', fg='#2E982E', font=('Consolas',20)).grid(row=1, column=0, padx=5, pady=20, columnspan=4)
+        
+
 
 if __name__ == '__main__':
     Program()
-
